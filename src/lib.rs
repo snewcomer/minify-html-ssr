@@ -1,17 +1,5 @@
-mod writable;
-
 use std::fs::File;
-use std::io::{Read, stdin, stdout, Write};
-
-#[derive(Copy, Clone, PartialEq, Eq)]
-enum ContentType {
-    Comment,
-    Bang,
-    End,
-    Start,
-    Tag,
-    Text,
-}
+use std::io::Read;
 
 macro_rules! io_unwrap {
     ($expr:expr) => {
@@ -25,42 +13,98 @@ macro_rules! io_unwrap {
     };
 }
 
-// Notes:
-// https://html.spec.whatwg.org/multipage/parsing.html#tag-open-state
-// TODO: encode '<' as &lte inside of an opening tag
+// A-Za-Z
+// exclamation mark !
+// solidus /
+// question mark ?
+fn is_ascii_alpha(c: char) -> bool {
+    match c {
+        // '\u{0030}'..='\u{0039}' => true,
+        '\u{0041}'..='\u{005A}' => true,
+        '\u{0061}'..='\u{007A}' => true,
+        '\u{0021}' => true,
+        '\u{002F}' => true,
+        '\u{003F}' => true,
+        _ => false,
+    }
+}
+
+// TODO:
+// Create Processor to encapsulate consuming characters and infinite number whitespaces
 pub fn minify_html(in_html: std::path::PathBuf) -> Result<String, std::io::Error> {
     let mut html = Vec::<u8>::new();
     let mut file = Box::new(io_unwrap!(File::open(in_html)));
     io_unwrap!(file.read_to_end(&mut html));
 
+    // peekable allows us to get next item.  It does not allow us to peek at the previous nor by index
     let mut sliced_html = html.iter().peekable();
     let mut res = String::with_capacity(html.len());
 
     let mut inside_tag = false;
-    let mut inside_quotes = false;
+    let mut bytes_to_encode_char = [0; 1];
+    let mut previous_tag = None;
 
     loop {
         match sliced_html.peek()  {
-            Some(c) if inside_tag == true && (**c as char).is_whitespace() => {},
-            Some(b'<') if inside_quotes != true => {
-                res.push('<');
-                inside_tag = false;
+            Some(c) if inside_tag == false && previous_tag == Some(">") && (**c as char).is_whitespace() => {}, // this collapses whitespaces
+            Some(b'<') if inside_tag != true => {
+                // consume '<' char
+                sliced_html.next();
+
+                // check following chars to see if valid html entity
+                // e.g. < pre vs. < 2
+                let mut next_char = sliced_html.peek();
+                if next_char.is_none() {
+                    // we are done
+                    break;
+                } else {
+                    // From the spec: https://html.spec.whatwg.org/multipage/parsing.html#tag-open-state
+                    // After a `<`, a valid character is an ASCII alpha, `/`, `!`, or `?`. Anything
+                    // else and the `<` is treated as content.
+                    let mut tmp = vec![];
+                    let mut ch = **next_char.unwrap() as char;
+
+                    while ch.is_whitespace() {
+                        tmp.push(ch);
+
+                        // consume
+                        sliced_html.next();
+
+                        next_char = sliced_html.peek();
+                        ch = **next_char.unwrap() as char;
+                    }
+
+                    // once we have consumed whitespaces, we can check spec
+                    match is_ascii_alpha(ch) {
+                        true => {
+                            res.push('<');
+                            inside_tag = true;
+                        }
+                        false => {
+                            res.push_str("&lte");
+                        }
+                    }
+
+                    for c in tmp {
+                        res.push(c);
+                    }
+
+                    res.push(ch);
+                }
             }
-            Some(b'>') if inside_quotes != true => {
+            Some(b'>') if inside_tag == true => {
                 res.push('>');
-                inside_tag = true;
+                inside_tag = false;
+                previous_tag = Some(">");
             }
             Some(c) => {
                 let ch = **c as char;
-                if ch == '\'' || ch == '"' {
-                    if inside_quotes == true {
-                        inside_quotes = false;
-                    } else {
-                        inside_quotes = true;
-                    }
-                }
 
                 res.push(ch);
+
+                // ch to &str
+                let result = ch.encode_utf8(&mut bytes_to_encode_char);
+                previous_tag = Some(result);
             }
             None => break
         };
@@ -81,6 +125,6 @@ mod tests {
         let mut dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         dir.push("test/test-input.html");
         let result = minify_html(dir);
-        assert_eq!(result.unwrap(), "<!DOCTYPE html><html prefix=\"og: http://ogp.me/ns#\"  dir=\"ltr\" lang=\"en-us\" xml:lang=\"en-us\"><body></body></html>".to_owned());
+        assert_eq!(result.unwrap(), "<!DOCTYPE html><html dir=\"ltr\" lang=\"en-us\" xml:lang=\"en-us\"><body><!-- test --><h1 id=\"\">HI</h1><p>1 &lte 2</p>< p >2  &lte 4</p><p class=\"<\">3 &lte 5</p><span /><music-video-player></music-video-player>style {\n      height: 100;\n    }\n  </body></html>".to_owned());
     }
 }
