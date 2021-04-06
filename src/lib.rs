@@ -1,3 +1,5 @@
+use wasm_bindgen::prelude::*;
+
 use std::fs::File;
 use std::io::Read;
 
@@ -6,8 +8,7 @@ macro_rules! io_unwrap {
         match $expr {
             Ok(r) => r,
             Err(e) => {
-                eprintln!("{}", e);
-                return Err(e);
+                todo!()
             }
         }
     };
@@ -19,7 +20,6 @@ macro_rules! io_unwrap {
 // question mark ?
 fn is_ascii_alpha(c: char) -> bool {
     match c {
-        // '\u{0030}'..='\u{0039}' => true,
         '\u{0041}'..='\u{005A}' => true,
         '\u{0061}'..='\u{007A}' => true,
         '\u{0021}' => true,
@@ -31,7 +31,8 @@ fn is_ascii_alpha(c: char) -> bool {
 
 // TODO:
 // Create Processor to encapsulate consuming characters and infinite number whitespaces
-pub fn minify_html(in_html: std::path::PathBuf) -> Result<String, std::io::Error> {
+#[wasm_bindgen]
+pub fn minify_html(in_html: String) -> String {
     let mut html = Vec::<u8>::new();
     let mut file = Box::new(io_unwrap!(File::open(in_html)));
     io_unwrap!(file.read_to_end(&mut html));
@@ -112,7 +113,7 @@ pub fn minify_html(in_html: std::path::PathBuf) -> Result<String, std::io::Error
         sliced_html.next();
     }
 
-    Ok(res)
+    res
 }
 
 #[cfg(test)]
@@ -124,7 +125,7 @@ mod tests {
     fn it_works() {
         let mut dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         dir.push("test/test-input.html");
-        let result = minify_html(dir);
-        assert_eq!(result.unwrap(), "<!DOCTYPE html><html dir=\"ltr\" lang=\"en-us\" xml:lang=\"en-us\"><body><!-- test --><h1 id=\"\">HI</h1><p>1 &lte 2</p>< p >2  &lte 4</p><p class=\"<\">3 &lte 5</p><span /><music-video-player></music-video-player>style {\n      height: 100;\n    }\n  </body></html>".to_owned());
+        let result = minify_html(dir.into_os_string().into_string().unwrap());
+        assert_eq!(result, "<!DOCTYPE html><html dir=\"ltr\" lang=\"en-us\" xml:lang=\"en-us\"><body><!-- test --><h1 id=\"\">HI</h1><p>1 &lte 2</p>< p >2  &lte 4</p><p class=\"<\">3 &lte 5</p><span /><music-video-player></music-video-player>style {\n      height: 100;\n    }\n  </body></html>".to_owned());
     }
 }
