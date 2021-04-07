@@ -1,6 +1,10 @@
 # minify-html-ssr
 For SSR WASM import.  Generates a /pkg wasm file to consume.  See: https://github.com/snewcomer/ember-fastboot-v2-example/tree/main/fastboot-server/middlewares
 
+## What it does
+
+This library removes extraneous whitespaces between HTML tags. Single spaces are preserved where necessary.
+
 ## Directions
 
 ### Local
