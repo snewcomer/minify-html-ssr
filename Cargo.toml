@@ -1,5 +1,5 @@
 [package]
-name = "html-whitespace"
+name = "minify-html-ssr"
 version = "0.1.0"
 authors = ["scott-newcomer <snewcomer24@gmail.com>"]
 edition = "2018"
