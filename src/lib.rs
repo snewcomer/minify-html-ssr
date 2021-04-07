@@ -112,6 +112,6 @@ mod tests {
         dir.push("test/test-input.html");
         let html = fs::read_to_string(dir).unwrap();
         let result = minify_html(html);
-        assert_eq!(result, "<!DOCTYPE html><html dir=\"ltr\" lang=\"en-us\" xml:lang=\"en-us\"><body><!-- test --><h1 id=\"\">HI</h1><p>1 &lte 2</p>< p >2  &lte 4</p><p class=\"<\">3 &lte 5</p><span /><music-video-player></music-video-player>style {\n      height: 100;\n    }\n  </body></html>".to_owned());
+        assert_eq!(result, "<!DOCTYPE html><html dir=\"ltr\" lang=\"en-us\" xml:lang=\"en-us\"><body><!-- test --><h1 id=\"\">HI</h1><p>1 &lte 2</p>< p >2  &lte 4</p><p class=\"<\">3 &lte 5</p><span /><!--%+b:8%-->0<!--%-b:8%--><music-video-player></music-video-player>style {\n      height: 100;\n    }\n  </body></html>".to_owned());
     }
 }
