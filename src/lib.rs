@@ -1,19 +1,5 @@
 use wasm_bindgen::prelude::*;
 
-use std::fs::File;
-use std::io::Read;
-
-macro_rules! io_unwrap {
-    ($expr:expr) => {
-        match $expr {
-            Ok(r) => r,
-            Err(e) => {
-                todo!()
-            }
-        }
-    };
-}
-
 // A-Za-Z
 // exclamation mark !
 // solidus /
@@ -33,9 +19,7 @@ fn is_ascii_alpha(c: char) -> bool {
 // Create Processor to encapsulate consuming characters and infinite number whitespaces
 #[wasm_bindgen]
 pub fn minify_html(in_html: String) -> String {
-    let mut html = Vec::<u8>::new();
-    let mut file = Box::new(io_unwrap!(File::open(in_html)));
-    io_unwrap!(file.read_to_end(&mut html));
+    let html = in_html.as_bytes();
 
     // peekable allows us to get next item.  It does not allow us to peek at the previous nor by index
     let mut sliced_html = html.iter().peekable();
@@ -118,6 +102,7 @@ pub fn minify_html(in_html: String) -> String {
 
 #[cfg(test)]
 mod tests {
+    use std::fs;
     use std::path::PathBuf;
     use super::*;
 
@@ -125,7 +110,8 @@ mod tests {
     fn it_works() {
         let mut dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         dir.push("test/test-input.html");
-        let result = minify_html(dir.into_os_string().into_string().unwrap());
+        let html = fs::read_to_string(dir).unwrap();
+        let result = minify_html(html);
         assert_eq!(result, "<!DOCTYPE html><html dir=\"ltr\" lang=\"en-us\" xml:lang=\"en-us\"><body><!-- test --><h1 id=\"\">HI</h1><p>1 &lte 2</p>< p >2  &lte 4</p><p class=\"<\">3 &lte 5</p><span /><music-video-player></music-video-player>style {\n      height: 100;\n    }\n  </body></html>".to_owned());
     }
 }
