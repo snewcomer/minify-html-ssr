@@ -10,3 +10,5 @@ For SSR WASM import.  Generates a /pkg wasm file to consume.  See: https://githu
 
 
 ### npm package
+1. npm install `minify-html-ssr`
+2. Minify the html body before sent down. [example](https://github.com/snewcomer/ember-alt-fastboot-app-server/blob/289cd96d88867ec997da44e19eec621a65ea418b/src/middlewares/fastboot.js#L124)
