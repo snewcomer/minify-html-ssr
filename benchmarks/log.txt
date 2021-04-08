@@ -14,3 +14,83 @@ Size:  11M
 Size Gzip: 1.6M
 ----
 
+----
+Date: 04-08-21
+
+· Large
+Char Count:  11777370
+Char Count Gzip:  1745757
+Size:  12M
+Size Gzip: 1.7M
+
+· Minified
+Char Count:  11498181
+Char Count Gzip:  1688589
+Size:  11M
+Size Gzip: 1.6M
+----
+
+----
+Date: 04-08-21
+
+· Large
+Char Count:  11777370
+Char Count Gzip:  1745757
+Size:  12M
+Size Gzip: 1.7M
+
+· Minified
+Char Count:  11498181
+Char Count Gzip:  1688589
+Size:  11M
+Size Gzip: 1.6M
+----
+
+----
+Date: 04-08-21
+
+· Large
+Char Count:  11777370
+Char Count Gzip:  1745757
+Size:  12M
+Size Gzip: 1.7M
+
+· Minified
+Char Count:  11498181
+Char Count Gzip:  1688589
+Size:  11M
+Size Gzip: 1.6M
+----
+
+----
+Date: 04-08-21
+
+· Large
+Char Count:  11777370
+Char Count Gzip:  1745757
+Size:  12M
+Size Gzip: 1.7M
+
+· Minified
+Char Count:  11498181
+Char Count Gzip:  1688589
+Size:  11M
+Size Gzip: 1.6M
+----
+
+----
+Date: 04-08-21
+
+· Large
+Char Count:  11777370
+Char Count Gzip:  1745757
+Size:  12M
+Size Gzip: 1.7M
+
+· Minified
+Char Count:  11498181
+Char Count Gzip:  1688589
+Size:  11M
+Size Gzip: 1.6M
+----
+
