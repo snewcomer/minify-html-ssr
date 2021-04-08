@@ -1,6 +1,10 @@
 # minify-html-ssr
 For SSR WASM import.
 
+## What it does
+
+This library removes extraneous whitespaces between HTML tags. Single spaces are preserved where necessary.
+
 ## Directions
 
 ### Local

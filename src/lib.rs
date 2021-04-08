@@ -15,6 +15,14 @@ fn is_ascii_alpha(c: char) -> bool {
     }
 }
 
+fn is_newline(c: char) -> bool {
+    match c {
+        '\u{000A}' => true,
+        '\u{000D}' => true,
+        _ => false,
+    }
+}
+
 // TODO:
 // Create Processor to encapsulate consuming characters and infinite number whitespaces
 #[wasm_bindgen]
@@ -26,12 +34,18 @@ pub fn minify_html(in_html: String) -> String {
     let mut res = String::with_capacity(html.len());
 
     let mut inside_tag = false;
-    let mut bytes_to_encode_char = [0; 1];
-    let mut previous_tag = None;
+    let mut previous_tag = ' ';
 
     loop {
         match sliced_html.peek()  {
-            Some(c) if inside_tag == false && previous_tag == Some(">") && (**c as char).is_whitespace() => {}, // this collapses whitespaces
+            Some(c) if inside_tag == false && is_newline(**c as char) => {
+                let ch = **c as char;
+                previous_tag = ch;
+            }, // this collapses whitespaces
+            Some(c) if inside_tag == false && previous_tag.is_whitespace() && (**c as char).is_whitespace() => {
+                let ch = **c as char;
+                previous_tag = ch;
+            }, // this collapses whitespaces
             Some(b'<') if inside_tag != true => {
                 // consume '<' char
                 sliced_html.next();
@@ -40,7 +54,7 @@ pub fn minify_html(in_html: String) -> String {
                 // e.g. < pre vs. < 2
                 let mut next_char = sliced_html.peek();
                 if next_char.is_none() {
-                    // we are done
+                    // this is an error
                     break;
                 } else {
                     // From the spec: https://html.spec.whatwg.org/multipage/parsing.html#tag-open-state
@@ -74,22 +88,19 @@ pub fn minify_html(in_html: String) -> String {
                         res.push(c);
                     }
 
+                    previous_tag = ch;
                     res.push(ch);
                 }
             }
             Some(b'>') if inside_tag == true => {
                 res.push('>');
                 inside_tag = false;
-                previous_tag = Some(">");
+                previous_tag = '>';
             }
             Some(c) => {
                 let ch = **c as char;
-
                 res.push(ch);
-
-                // ch to &str
-                let result = ch.encode_utf8(&mut bytes_to_encode_char);
-                previous_tag = Some(result);
+                previous_tag = ch;
             }
             None => break
         };
@@ -112,6 +123,6 @@ mod tests {
         dir.push("test/test-input.html");
         let html = fs::read_to_string(dir).unwrap();
         let result = minify_html(html);
-        assert_eq!(result, "<!DOCTYPE html><html dir=\"ltr\" lang=\"en-us\" xml:lang=\"en-us\"><body><!-- test --><h1 id=\"\">HI</h1><p>1 &lte 2</p>< p >2  &lte 4</p><p class=\"<\">3 &lte 5</p><span /><!--%+b:8%-->0<!--%-b:8%--><music-video-player></music-video-player>style {\n      height: 100;\n    }\n  </body></html>".to_owned());
+        assert_eq!(result, "<!DOCTYPE html><html dir=\"ltr\" lang=\"en-us\" xml:lang=\"en-us\"><body><!-- test --><h1 id=\"\">HI</h1><p>1 &lte 2</p>< p >2 &lte 4</p><p id=\"foo\" class=\"<\" aria-label=\"bar\">3 &lte 5</p><span /><div>hi <span class=\"bold\"> scott </span> a</div><!--%+b:8%-->0<!--%-b:8%--><music-video-player></music-video-player>style {height: 100;}</body></html>".to_owned());
     }
 }
