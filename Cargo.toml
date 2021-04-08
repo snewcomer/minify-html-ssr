@@ -5,7 +5,13 @@ authors = ["scott-newcomer <snewcomer24@gmail.com>"]
 edition = "2018"
 
 [lib]
-crate-type = ["cdylib"]
+name = "minify_html_ssr"
+src = "src/lib.rs"
+# crate-type = ["cdylib"]
+
+[[bin]]
+name = "minify_html_ssr"
+src = "src/bin"
 
 [dependencies]
 wasm-bindgen = "0.2.73"
