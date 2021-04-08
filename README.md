@@ -14,8 +14,9 @@ This library removes extraneous whitespaces between HTML tags. Single spaces are
 ```
 res.send(minify_html(body));
 ```
-
-
 ### npm package
-1. npm install `minify-html-ssr`
+1. `npm install minify-html-ssr`
 2. Minify the html body before sent down.
+
+## Downsides
+This is a runtime library. It is meant to work fast for you.  However, a build time solution that collapses whitespace might be better for your app.
