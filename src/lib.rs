@@ -5,23 +5,18 @@ use wasm_bindgen::prelude::*;
 // solidus /
 // question mark ?
 // codepoints
-// '\u{0041}'..='\u{005A}' => true,
-// '\u{0061}'..='\u{007A}' => true,
-// '\u{0021}' => true,
-// '\u{002F}' => true,
-// '\u{003F}' => true,
-fn is_ascii_alpha(c: u8) -> bool {
+fn is_ascii_alpha(c: &char) -> bool {
     match c {
-        b'A'..=b'Z' => true,
-        b'a'..=b'z' => true,
-        b'!' => true,
-        b'/' => true,
-        b'?' => true,
+        '\u{0041}'..='\u{005A}' => true,
+        '\u{0061}'..='\u{007A}' => true,
+        '\u{0021}' => true,
+        '\u{002F}' => true,
+        '\u{003F}' => true,
         _ => false,
     }
 }
 
-fn is_newline(c: char) -> bool {
+fn is_newline(c: &char) -> bool {
     match c {
         '\u{000A}' => true,
         '\u{000D}' => true,
@@ -37,34 +32,34 @@ const CLOSE_TAG: char = '>';
 // Create Processor to encapsulate consuming characters and infinite number whitespaces
 #[wasm_bindgen]
 pub fn minify_html(in_html: String) -> String {
-    let html = in_html.as_bytes();
+    // iterate over chars, not bytes
+    // we might be in the middle of a multi-byte
+    let html = in_html.chars();
 
     // peekable allows us to get next item.  It does not allow us to peek at the previous nor by index
-    let mut sliced_html = html.iter().peekable();
-    let mut res = String::with_capacity(html.len());
+    let mut sliced_html = html.peekable();
+    let mut res = String::with_capacity(in_html.len());
 
     let mut inside_tag = false;
-    let mut previous_tag = b' ';
+    let mut previous_tag = ' ';
 
     loop {
-        // peek gives us  &&u8
-        match sliced_html.peek()  {
-            Some(u8b) if inside_tag == false && is_newline(**u8b as char) => {
-                let ch = **u8b;
-                previous_tag = ch;
+        // peek gives us &&u8
+        match sliced_html.peek() {
+            Some(ch) if inside_tag == false && is_newline(ch) => {
+                previous_tag = *ch;
             }, // this collapses whitespaces
-            Some(u8b) if inside_tag == false && previous_tag.is_ascii_whitespace() && u8b.is_ascii_whitespace() => {
-                let ch = **u8b;
-                previous_tag = ch;
+            Some(ch) if inside_tag == false && previous_tag.is_whitespace() && ch.is_whitespace() => {
+                previous_tag = *ch;
             }, // this collapses whitespaces
-            Some(b'<') if inside_tag != true => {
+            Some('<') if inside_tag != true => {
                 // consume '<' char
                 sliced_html.next();
 
                 // check following chars to see if valid html entity
                 // e.g. < pre vs. < 2
-                let mut next_u8b = sliced_html.peek();
-                if next_u8b.is_none() {
+                let mut next_ch = sliced_html.peek();
+                if next_ch.is_none() {
                     // this is an error
                     break;
                 } else {
@@ -72,20 +67,20 @@ pub fn minify_html(in_html: String) -> String {
                     // After a `<`, a valid character is an ASCII alpha, `/`, `!`, or `?`. Anything
                     // else and the `<` is treated as content.
                     let mut tmp = vec![];
-                    let mut u8b = **next_u8b.unwrap();
+                    let mut ch = next_ch.unwrap();
 
-                    while u8b.is_ascii_whitespace() {
-                        tmp.push(u8b as char);
+                    while ch.is_ascii_whitespace() {
+                        tmp.push(*ch);
 
                         // consume
                         sliced_html.next();
 
-                        next_u8b = sliced_html.peek();
-                        u8b = **next_u8b.unwrap();
+                        next_ch = sliced_html.peek();
+                        ch = next_ch.unwrap();
                     }
 
                     // once we have consumed whitespaces, we can check spec
-                    match is_ascii_alpha(u8b) {
+                    match is_ascii_alpha(ch) {
                         true => {
                             res.push(OPEN_TAG);
                             inside_tag = true;
@@ -99,19 +94,18 @@ pub fn minify_html(in_html: String) -> String {
                         res.push(ch);
                     }
 
-                    previous_tag = u8b;
-                    res.push(u8b as char);
+                    previous_tag = *ch;
+                    res.push(*ch);
                 }
             }
-            Some(b'>') if inside_tag == true => {
+            Some('>') if inside_tag == true => {
                 res.push(CLOSE_TAG);
                 inside_tag = false;
-                previous_tag = b'>';
+                previous_tag = '>';
             }
-            Some(c) => {
-                let ch = **c;
-                res.push(ch as char);
-                previous_tag = ch;
+            Some(ch) => {
+                res.push(*ch);
+                previous_tag = *ch;
             }
             None => break
         };
@@ -144,5 +138,14 @@ mod tests {
         let html = fs::read_to_string(dir).unwrap();
         let result = minify_html(html);
         assert_eq!(result, "<!DOCTYPE html><html prefix=\"og: http://ogp.me/ns#\"  dir=\"ltr\" lang=\"en-us\" xml:lang=\"en-us\"><body\n\n  </body></html>".to_owned());
+    }
+
+    #[test]
+    fn asian_chars() {
+        let mut dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        dir.push("test/test-asian-chars.html");
+        let html = fs::read_to_string(dir).unwrap();
+        let result = minify_html(html);
+        assert_eq!(result, "<h1>異體字字典</h1>".to_owned());
     }
 }
