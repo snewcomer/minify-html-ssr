@@ -4,13 +4,18 @@ use wasm_bindgen::prelude::*;
 // exclamation mark !
 // solidus /
 // question mark ?
-fn is_ascii_alpha(c: char) -> bool {
+fn is_ascii_alpha(c: u8) -> bool {
     match c {
-        '\u{0041}'..='\u{005A}' => true,
-        '\u{0061}'..='\u{007A}' => true,
-        '\u{0021}' => true,
-        '\u{002F}' => true,
-        '\u{003F}' => true,
+        // '\u{0041}'..='\u{005A}' => true,
+        // '\u{0061}'..='\u{007A}' => true,
+        // '\u{0021}' => true,
+        // '\u{002F}' => true,
+        // '\u{003F}' => true,
+        b'A'..=b'Z' => true,
+        b'a'..=b'z' => true,
+        b'!' => true,
+        b'/' => true,
+        b'?' => true,
         _ => false,
     }
 }
@@ -34,16 +39,16 @@ pub fn minify_html(in_html: String) -> String {
     let mut res = String::with_capacity(html.len());
 
     let mut inside_tag = false;
-    let mut previous_tag = ' ';
+    let mut previous_tag = b' ';
 
     loop {
         match sliced_html.peek()  {
             Some(c) if inside_tag == false && is_newline(**c as char) => {
-                let ch = **c as char;
+                let ch = **c;
                 previous_tag = ch;
             }, // this collapses whitespaces
-            Some(c) if inside_tag == false && previous_tag.is_whitespace() && (**c as char).is_whitespace() => {
-                let ch = **c as char;
+            Some(c) if inside_tag == false && previous_tag.is_ascii_whitespace() && c.is_ascii_whitespace() => {
+                let ch = **c;
                 previous_tag = ch;
             }, // this collapses whitespaces
             Some(b'<') if inside_tag != true => {
@@ -61,16 +66,16 @@ pub fn minify_html(in_html: String) -> String {
                     // After a `<`, a valid character is an ASCII alpha, `/`, `!`, or `?`. Anything
                     // else and the `<` is treated as content.
                     let mut tmp = vec![];
-                    let mut ch = **next_char.unwrap() as char;
+                    let mut ch = **next_char.unwrap();
 
-                    while ch.is_whitespace() {
-                        tmp.push(ch);
+                    while ch.is_ascii_whitespace() {
+                        tmp.push(ch as char);
 
                         // consume
                         sliced_html.next();
 
                         next_char = sliced_html.peek();
-                        ch = **next_char.unwrap() as char;
+                        ch = **next_char.unwrap();
                     }
 
                     // once we have consumed whitespaces, we can check spec
@@ -89,17 +94,17 @@ pub fn minify_html(in_html: String) -> String {
                     }
 
                     previous_tag = ch;
-                    res.push(ch);
+                    res.push(ch as char);
                 }
             }
             Some(b'>') if inside_tag == true => {
                 res.push('>');
                 inside_tag = false;
-                previous_tag = '>';
+                previous_tag = b'>';
             }
             Some(c) => {
-                let ch = **c as char;
-                res.push(ch);
+                let ch = **c;
+                res.push(ch as char);
                 previous_tag = ch;
             }
             None => break
