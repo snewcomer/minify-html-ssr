@@ -19,4 +19,6 @@ res.send(minify_html(body));
 2. Minify the html body before sent down.
 
 ## Downsides
-This is a runtime library. It is meant to work fast for you.  However, a build time solution that collapses whitespace might be better for your app.
+- This is a runtime library. It is meant to work fast for you.  However, a build time solution that collapses whitespace might be better for your app.
+
+- Do you brotli compress your HTML?  If not, you might be able to drop ~30% of your characters versus gzip.
