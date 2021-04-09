@@ -6,6 +6,5 @@ fn main() {
     src_file.push(args[0].to_owned());
     let html = std::fs::read_to_string(src_file).unwrap();
     let res = minify_html_ssr::minify_html(html);
-    println!("count: {}", &res.chars().count());
     println!("{}", &res);
 }
