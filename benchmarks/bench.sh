@@ -1,5 +1,8 @@
 #!/bin/bash
 
+rm -rf test.min.html
+time_spent=$( { time cargo run --release --bin minify_html_ssr ./test.html > test.min.html; } 2>&1 | awk -F'[s.]' '/user/{print $3}' )
+
 count=$( cat test.html | wc -c )
 count_gzip=$( cat test.html | gzip | wc -c )
 size=$( du -sh test.html | cut -f 1)
@@ -28,5 +31,7 @@ Char Count: $count_min
 Char Count Gzip: $count_min_gzip
 Size: $size_min
 Size Gzip: $size_min_gzip
+
+Time: $time_spent ms
 ----
 " >> log.txt

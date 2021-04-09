@@ -8,9 +8,11 @@ Size:  11M
 Size Gzip: 1.7M
 
 · Minified
-Char Count:  11498181
-Char Count Gzip:  1688589
+Char Count:  11498211
+Char Count Gzip:  1688604
 Size:  11M
 Size Gzip: 1.6M
+
+Time: 136 ms
 ----
 
