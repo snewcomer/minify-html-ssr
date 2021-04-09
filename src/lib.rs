@@ -26,21 +26,25 @@ fn is_newline(c: char) -> bool {
 // TODO:
 // Create Processor to encapsulate consuming characters and infinite number whitespaces
 #[wasm_bindgen]
-pub fn minify_html(in_html: Vec<u8>) -> Vec<u8> {
+pub fn minify_html(in_html: String) -> String {
+    let html = in_html.as_bytes();
+
     // peekable allows us to get next item.  It does not allow us to peek at the previous nor by index
-    let mut sliced_html = in_html.iter().peekable();
-    let mut res = Vec::with_capacity(in_html.len());
+    let mut sliced_html = html.iter().peekable();
+    let mut res = String::with_capacity(html.len());
 
     let mut inside_tag = false;
-    let mut previous_tag = b' ';
+    let mut previous_tag = ' ';
 
     loop {
         match sliced_html.peek()  {
             Some(c) if inside_tag == false && is_newline(**c as char) => {
-                previous_tag = **c;
+                let ch = **c as char;
+                previous_tag = ch;
             }, // this collapses whitespaces
-            Some(c) if inside_tag == false && (previous_tag as char).is_whitespace() && (**c as char).is_whitespace() => {
-                previous_tag = **c;
+            Some(c) if inside_tag == false && previous_tag.is_whitespace() && (**c as char).is_whitespace() => {
+                let ch = **c as char;
+                previous_tag = ch;
             }, // this collapses whitespaces
             Some(b'<') if inside_tag != true => {
                 // consume '<' char
@@ -57,28 +61,26 @@ pub fn minify_html(in_html: Vec<u8>) -> Vec<u8> {
                     // After a `<`, a valid character is an ASCII alpha, `/`, `!`, or `?`. Anything
                     // else and the `<` is treated as content.
                     let mut tmp = vec![];
-                    let mut ch = **next_char.unwrap();
+                    let mut ch = **next_char.unwrap() as char;
 
-                    while (ch as char).is_whitespace() {
-                        tmp.push(b' ');
+                    while ch.is_whitespace() {
+                        tmp.push(ch);
 
                         // consume
                         sliced_html.next();
 
                         next_char = sliced_html.peek();
-                        ch = **next_char.unwrap();
+                        ch = **next_char.unwrap() as char;
                     }
 
                     // once we have consumed whitespaces, we can check spec
-                    match is_ascii_alpha(ch as char) {
+                    match is_ascii_alpha(ch) {
                         true => {
-                            res.push(b'<');
+                            res.push('<');
                             inside_tag = true;
                         }
                         false => {
-                            for l in "&lte".as_bytes() {
-                                res.push(*l);
-                            }
+                            res.push_str("&lte");
                         }
                     }
 
@@ -91,13 +93,14 @@ pub fn minify_html(in_html: Vec<u8>) -> Vec<u8> {
                 }
             }
             Some(b'>') if inside_tag == true => {
-                res.push(b'>');
+                res.push('>');
                 inside_tag = false;
-                previous_tag = b'>';
+                previous_tag = '>';
             }
             Some(c) => {
-                res.push(**c);
-                previous_tag = **c;
+                let ch = **c as char;
+                res.push(ch);
+                previous_tag = ch;
             }
             None => break
         };
@@ -118,9 +121,8 @@ mod tests {
     fn it_works() {
         let mut dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         dir.push("test/test-input.html");
-        let html = fs::read(dir).unwrap();
+        let html = fs::read_to_string(dir).unwrap();
         let result = minify_html(html);
-        let str_result = std::str::from_utf8(&result).unwrap();
-        assert_eq!(str_result, "<!DOCTYPE html><html dir=\"ltr\" lang=\"en-us\" xml:lang=\"en-us\"><body><!-- test --><h1 id=\"\">HI&nbsp;</h1><p>1 &lte 2</p>< p >2 &lte 4</p><p id=\"foo\" class=\"<\" aria-label=\"bar\">3 &lte 5</p><span /><div>hi <span class=\"bold\"> scott </span> a</div><!--%+b:8%-->0<!--%-b:8%--><music-video-player></music-video-player>style {height: 100;}</body></html>".to_owned());
+        assert_eq!(result, "<!DOCTYPE html><html dir=\"ltr\" lang=\"en-us\" xml:lang=\"en-us\"><body><!-- test --><h1 id=\"\">HI&nbsp;</h1><p>1 &lte 2</p>< p >2 &lte 4</p><p id=\"foo\" class=\"<\" aria-label=\"bar\">3 &lte 5</p><span /><div>hi <span class=\"bold\"> scott </span> a</div><!--%+b:8%-->0<!--%-b:8%--><music-video-player></music-video-player>style {height: 100;}</body></html>".to_owned());
     }
 }
