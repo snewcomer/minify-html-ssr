@@ -3,7 +3,7 @@ name = "minify-html-ssr"
 description = "Minify your HTML in Nodejs"
 repository = "https://github.com/snewcomer/minify-html-ssr"
 license = "MIT"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["scott-newcomer <snewcomer24@gmail.com>"]
 edition = "2018"
 
